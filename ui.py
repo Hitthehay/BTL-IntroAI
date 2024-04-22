@@ -1,8 +1,9 @@
 from numpy import matrix
 import pygame
 from algorithm import *
+import tkinter as tk  
 widthscreen = 800
-heightscreen = 800
+heightscreen = 600
 
 khaki = (240,230,140)
 slate_gray = (112,128,144)
@@ -15,7 +16,7 @@ black = (0,0,0)
 pygame.init()
 
 font1 = pygame.font.Font(None,30)
-
+font_large = pygame.font.Font(None, 40)
 
 clock = pygame.time.Clock()
 
@@ -35,10 +36,10 @@ class Button:
 		self.locaton = locaton
 		self.rect =  pygame.Rect( locaton, (width, height))
 		self.rect.topleft = self.locaton
-		self.buttonColor = (255,255,255)
+		self.buttonColor = (14, 70, 163)
 		self.clicked = False
 		font1 = pygame.font.Font(None,30)
-		self.fontButton = font1.render(text, True, (0,0,0))
+		self.fontButton = font1.render(text, True, (14, 70, 163))
 		self.action = False
 	def draw(self, surface):
 		self.action = False
@@ -56,10 +57,10 @@ class Button:
 
 		#draw button on screen
 		if self.action == True:
-			self.buttonColor = (152,251,152)
+			self.buttonColor = (154, 200, 205)
 			pygame.draw.rect(surface, self.buttonColor,self.rect)
 		else: 
-			self.buttonColor = (255,255,255)
+			self.buttonColor = (154, 200, 205)
 			pygame.draw.rect(surface, self.buttonColor,self.rect)
 		
 		
@@ -146,7 +147,7 @@ class GameControl:
       self.widthEle = width
       self.heightEle = height
       self.display_surface = pygame.display.set_mode((widthscreen, heightscreen))
-      self.display_surface.fill(khaki)
+      self.display_surface.fill((255, 255, 255))
       pygame.display.set_caption("Tent-puzzle")
       img = pygame.image.load("shin.jpg")
       pygame.display.set_icon(img)
@@ -159,8 +160,8 @@ class GameControl:
       self.setData(self.path[0])
       
 
-      self.nextStep = Button((625,600), 100, 50, "next")
-      self.previousStep = Button( (500,600), 100, 50, "previous")
+      self.nextStep = Button((600,500), 75, 50, "next")
+      self.previousStep = Button( (475,500), 116, 50, "previous")
 
        
    def setData(self, temp):
@@ -190,23 +191,23 @@ class GameControl:
                self.interfaceMatrix[i][j].setCamp = True
 
    def display(self):
-      title = font1.render("Puzzle - tents", True, red)
-      self.display_surface.blit(title, (300, 75))
-      stepDispay = font1.render("Step: " + str(self.step), True, brown)
+      title = font_large.render("Tents Puzzle", True, (30, 3, 66))
+      self.display_surface.blit(title, (310, 75))
+      stepDispay = font1.render("Step: " + str(self.step), True, (14, 70, 163))
       self.display_surface.blit(stepDispay, (50,50))
       for i in range(self.size):
          if not(self.checkCol(i)):
             autoTurnOn =font1.render(str(self.col[i]) , True, red)          
          else: 
             autoTurnOn =font1.render(str(self.col[i]) , True, black)
-         self.display_surface.blit(autoTurnOn, (150 + i*(self.widthEle + length_between_2_button) + self.widthEle/3, 125))
+         self.display_surface.blit(autoTurnOn, (300 + i*(self.widthEle + length_between_2_button) + self.widthEle/3, 125))
 
       for i in range(self.size):
          if not(self.checkRow(i)):
             autoTurnOn =font1.render(str(self.row[i]) , True, red)
          else:
             autoTurnOn =font1.render(str(self.row[i]) , True, black)
-         self.display_surface.blit(autoTurnOn, (125, 150 + i*(self.heightEle + length_between_2_button) + self.heightEle/3))
+         self.display_surface.blit(autoTurnOn, (275, 150 + i*(self.heightEle + length_between_2_button) + self.heightEle/3))
       
       for i in range(self.size):
          for j in range(self.size):
@@ -272,17 +273,14 @@ class GameControl:
 
 if __name__ == "__main__":
    temp = Searching()
-   choose = int(input("chose bfs: 1 or dfs: 2 or aStar: 3 -> "))
+   choose = int(input("Choose dfs: 1 or aStar: 2 => "))
    if choose == 1:
-      print("Solving BFS. Please wait...")
-      temp.bfs()
-   elif choose == 3:
+      print("Solving DFS. Please wait...")
+      temp.dfs()
+   elif choose == 2:
       temp.aStar()
       print("Solving A*. Please wait...")
-   elif choose == 2:
-      temp.dfs()
-      print("Solving DFS. Please wait...")
-   head = GameControl(temp.inputTESTCASE,temp.path, temp.size, (150,150), 30, 30)
+   head = GameControl(temp.inputTESTCASE,temp.path, temp.size, (300,150), 30, 30)
    running = True
    while running:
       for event in pygame.event.get():
@@ -290,9 +288,8 @@ if __name__ == "__main__":
             running ==False
             pygame.quit()
             exit(0)
-      head.display_surface.fill(khaki)
+      head.display_surface.fill((225, 247, 245))
       head.display()
       
       pygame.display.update()
-
 

@@ -5,9 +5,7 @@ class Node:
       self.matrix = copy.deepcopy(matrix)
       self.previous = previous
       if (self.previous == None):
-         self.step = 0
          self.countCamp = 0
-      else:
-         self.step = self.previous.step + 1 
+      else: 
          self.countCamp = self.previous.countCamp + 1
    

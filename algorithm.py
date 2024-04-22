@@ -3,7 +3,8 @@ from node import Node
 from testcase import data
 import time
 import copy
-def getAllPossiblePosition(posible: list, size):
+import psutil
+def getAllSurroundPosition(posible: list, size):
    ans = []
    if posible[0] + 1 < size:
       ans.append([posible[0]+ 1, posible[1]])
@@ -23,7 +24,7 @@ def getAllPossiblePosition(posible: list, size):
       ans.append([posible[0], posible[1] - 1])
    return ans
 
-def getHorAndVerPosition(posible: list, size):
+def fetchHVPos(posible: list, size):
    ans = []
    if posible[0] + 1 < size: 
       ans.append([posible[0]+ 1, posible[1]])
@@ -35,7 +36,7 @@ def getHorAndVerPosition(posible: list, size):
       ans.append([posible[0], posible[1] - 1])
    return ans 
 
-def checkValidPosition(temp: Node, position: list)->bool:
+def isValidPos(temp: Node, position: list)->bool:
    '''
    Check 
    '''
@@ -43,19 +44,19 @@ def checkValidPosition(temp: Node, position: list)->bool:
    j = position[1]
    if temp.matrix[i][j] == 2:
       return False
-   list1 = getAllPossiblePosition(position, temp.size)
+   list1 = getAllSurroundPosition(position, temp.size) #check xung quanh có lều nào đã được đặt hay chưa
    for item in list1:
       if temp.matrix[item[0]][item[1]] == 2:
           return False
-   list2 = getHorAndVerPosition(position, temp.size)
+   list2 = fetchHVPos(position, temp.size)
    for item in list2:
       if temp.matrix[item[0]][item[1]] == 1:
          return True
 
    return  False
 
-def canAssign(temp: Node, row: list, col: list, position: list)->bool:
-   #if not(checkValidPosition(temp, position)):
+def assignable(temp: Node, row: list, col: list, position: list)->bool:
+   #if not(isValidPos(temp, position)):
    #   return False
    count = 1
    for i in range(temp.size):
@@ -108,18 +109,17 @@ def AstarFunction(node: Node, row_req: list, col_req: list) -> int:
     col_penalty = sum(abs(col_req[i] - col_tents[i]) for i in range(node.size))
     
     # Additional cost for each step to encourage solution with fewer moves
-    return row_penalty + col_penalty + node.step
+    return row_penalty + col_penalty
 
 
    
-def generateNode(current: Node, row: list, col: list)->list:
+def genNode(current: Node, row: list, col: list)->list:
    ans = []
    for i in range(current.size):
       for j in range(current.size):
-            if current.matrix[i][j] == 0 and canAssign(current, row, col, [i,j]) and checkValidPosition(current, [i,j]):
+            if current.matrix[i][j] == 0 and assignable(current, row, col, [i,j]) and isValidPos(current, [i,j]):
                temp = Node(copy.deepcopy(current.matrix), current.size, current)
                temp.matrix[i][j] = 2
-               temp.countCamp = current.countCamp + 1
                ans.append(temp)
    return ans
 class Searching:
@@ -139,52 +139,41 @@ class Searching:
       while temp != None:
          ans.insert(0,temp)
          temp = temp.previous
-      return ans
-   def bfs(self):
-      startTime = time.time()
-      queue = [self.initNode]
-      visited = [self.initNode]
-      while queue:
-         currentNode = queue.pop(0)
-         
-         if isGoalState(currentNode, self.row, self.col):
-            self.path = self.getPath(currentNode)
-
-            executeTime = time.time() - startTime
-            print("Time for searching: ", str(round(executeTime, 4)))
-            print("Total node generated: ", len(visited) + len(queue))
-            return
-         
-         generateNodeList = generateNode(currentNode, self.row, self.col)
-         for item in generateNodeList:
-            if item not in visited:
-               queue.append(item)  
-               visited.append(item)             
+      return ans          
 
 
    def dfs(self):
-      startTime = time.time()
-      stack = []
-      stack.append(self.initNode)
-      visited = []
-      while len(stack) != 0:
-         currentNode = stack.pop(len(stack) - 1)
-         visited.append(currentNode)
-         if isGoalState(currentNode, self.row, self.col):
-            self.path = self.getPath(currentNode)
-            executeTime = time.time() - startTime
-            print("Time for searching: ", str(round(executeTime, 4)))
-            print("Total node generated: ", len(stack) + len(visited)) 
-            return
-         generateNodeList = generateNode(currentNode, self.row, self.col)
-         for item in generateNodeList:
-            if item not in visited and item not in stack:
-               stack.append(item)
+        startTime = time.time()
+        initial_memory = psutil.virtual_memory().used / (1024*1024)
+        stack = [self.initNode]
+        visited = set()  # Using a set to track visited nodes
+
+        while stack:
+            currentNode = stack.pop()
+            # Creating a unique signature for each node based on its matrix
+            node_signature = tuple(tuple(row) for row in currentNode.matrix)
+            if node_signature in visited:
+                continue
+            visited.add(node_signature)
+
+            if isGoalState(currentNode, self.row, self.col):
+                self.path = self.getPath(currentNode)
+                final_memory = psutil.virtual_memory().used / (1024*1024)
+                memory_consumption = final_memory - initial_memory
+                executeTime = time.time() - startTime
+                print("DFS Memory Consumption:", abs(memory_consumption), "MB")
+                print("Time for searching:", str(round(executeTime, 4)))
+                print("Total node generated:", len(visited))
+                return
+
+            genNodeList = genNode(currentNode, self.row, self.col)
+            stack.extend(genNodeList)
                   
 
       
    def aStar(self):
       startTime = time.time()
+      initial_memory = psutil.virtual_memory().used / (1024*1024)
       openList = []
       closeList = []
       heuristic_value = AstarFunction(self.initNode, self.row, self.col)
@@ -196,13 +185,15 @@ class Searching:
          closeList.append(currentNode[1])
          if isGoalState(currentNode[1], self.row, self.col):
             self.path =  self.getPath(closeList[len(closeList) - 1])
-
+            final_memory = psutil.virtual_memory().used / (1024*1024)
+            memory_consumption = (final_memory - initial_memory) 
             executeTime = time.time() - startTime
+            print("A star Memory Consumption::", abs(memory_consumption), "MB")
             print("Time for searching: ", str(round(executeTime, 4)))
             print("Total node: ", len(openList) + len(closeList))
             return
-         generateNodeList = generateNode(currentNode[1], self.row, self.col)
-         for item in generateNodeList:
+         genNodeList = genNode(currentNode[1], self.row, self.col)
+         for item in genNodeList:
             if item not in closeList and item not in (subitem for subitem in openList):
                openList.append([AstarFunction(item, self.row, self.col), item])
          openList.sort(key=lambda x: int(x[0]))
